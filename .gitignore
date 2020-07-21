@@ -1,0 +1,8 @@
+node_modules/
+obj/
+build/
+x64/
+.vs/
+*.user
+package-lock.json
+*.cc

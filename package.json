@@ -1,0 +1,17 @@
+{
+  "name": "maia-native",
+  "version": "1.0.0",
+  "description": "Native components for maia",
+  "main": "test.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-addon-api": "^3.0.1"
+  }
+}

@@ -1,0 +1,1 @@
+node-gyp build && cp build/Release/MaiaNative.node ../Mai/maia/native/
