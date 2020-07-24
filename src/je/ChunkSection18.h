@@ -14,7 +14,17 @@ private:
 	// @extremeheat: Andromeda code
     unsigned char y;
     std::array<char, 16 * 16 * 16> blocks;
-    // 2048 bytes
+
+	// We use above to store raw blocks, we use blockProperties to precompute basic info
+	// about block that is relevant to the pathfinder in order to ensure the fastest A*
+	// possible that is the least costly.
+	// We must update blockProperties when setBlockID is called after we have init'ed this
+	// This is init'ed only the first time we try to do an A*
+	BlockProps* blockProperties = nullptr;
+	//std::array<char, 16 * 16 * 16> blockProperties;
+	bool blockPropertiesInited = false;
+
+	// 2048 bytes
     std::unique_ptr<Utils::NibbleArray> blockData;
     std::unique_ptr<Utils::NibbleArray> blockLight;
     std::unique_ptr<Utils::NibbleArray> blockSkyLight;
@@ -31,9 +41,43 @@ public:
         this->blockSkyLight = std::unique_ptr<Utils::NibbleArray>(new Utils::NibbleArray(2048));
 	}
 
-	void initialize() {
+	inline void initialize() {
 		this->blocks = std::array<char, 16 * 16 * 16>();
+		this->initializeBlockProperties();
 	}
+
+	// block props
+
+	inline void initializeBlockProperties() {
+		this->blockProperties = new BlockProps[16 * 16 * 16];
+	}
+
+	inline void updateBlockProperties() {
+		for (int x = 0; x < 16; x++) {
+			for (int y = 0; y < 16; y++) {
+				for (int z = 0; z < 16; z++) {
+					this->updateBlockProperties(x, y, z);
+				}
+			}
+		}
+	}
+	
+	void updateBlockProperties(char x, char y, char z);
+
+	virtual inline void setBlockProperties(char x, char y, char z, BlockProps props) {
+		if (this->blockProperties == nullptr) {
+			return; //haven't loaded blockProperties
+		}
+		auto i = this->getIndex(x, y, z);
+		this->blockProperties[i] = props;
+	}
+
+	virtual inline BlockProps getBlockProperties(char x, char y, char z) {
+		auto i = this->getIndex(x, y, z);
+		return this->blockProperties[i];
+	}
+
+	// end block props
 
 	virtual inline unsigned char getY() override {
 		return this->y;
@@ -43,11 +87,11 @@ public:
 		return false;
 	}
 
-	char* getBlockLightBuffer() {
+	inline char* getBlockLightBuffer() {
 		return (char*)this->blockLight->get();
 	}
 
-	char* getSkyLightBuffer() {
+	inline char* getSkyLightBuffer() {
 		return (char*)this->blockSkyLight->get();
 	}
 
@@ -55,9 +99,7 @@ public:
 		return this->blocks[this->getIndex(x, y, z)];
 	}
 
-	inline void setBlockId(char x, char y, char z, unsigned char blockId) {
-		this->blocks[this->getIndex(x, y, z)] = blockId;
-	}
+	void setBlockId(char x, char y, char z, unsigned char blockId);
 
 	inline char getBlockMetadata(char x, char y, char z) {
 		return this->blockData->get(this->getIndex(x, y, z));

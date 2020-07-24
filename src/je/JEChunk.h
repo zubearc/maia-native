@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Utils.h"
 // Andromeda
 
 class JChunkColumn {
@@ -42,6 +43,8 @@ public:
 	inline virtual void setBlockState(byte x, byte y, byte z, PalleteMappedBlockState blockState);
 	inline virtual PalleteMappedBlockState getBlockState(byte x, byte y, byte z);*/
 
+	virtual void setBlockProperties(char x, char y, char z, BlockProps props) = 0;
+	virtual BlockProps getBlockProperties(char x, char y, char z) = 0;
 
 	// LIGHTING FUNCTIONS
 

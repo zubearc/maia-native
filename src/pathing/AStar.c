@@ -65,7 +65,7 @@ struct __VisitedNodes {
     void* context;
     size_t nodeRecordsCapacity;
     size_t nodeRecordsCount;
-    void* nodeRecords;
+    NodeRecord* nodeRecords;
     size_t* nodeRecordsIndex;           // array of nodeRecords indexes, kept sorted by nodeRecords[i]->nodeKey using source->nodeComparator
     size_t openNodesCapacity;
     size_t openNodesCount;
@@ -110,8 +110,7 @@ static inline Node NodeMake(VisitedNodes nodes, size_t index)
 
 static inline NodeRecord* NodeGetRecord(Node node)
 {
-    auto records = node.nodes->nodeRecords;
-    return records + (node.index * (node.nodes->source->nodeSize + sizeof(NodeRecord)));
+    return (char*)node.nodes->nodeRecords + (node.index * (node.nodes->source->nodeSize + sizeof(NodeRecord)));
 }
 
 static inline void* GetNodeKey(Node node)
@@ -402,8 +401,7 @@ static inline float NeighborListGetEdgeCost(ASNeighborList list, size_t index)
 
 static void* NeighborListGetNodeKey(ASNeighborList list, size_t index)
 {
-    auto keys = list->nodeKeys;
-    return keys + (index * list->source->nodeSize);
+    return (char*)list->nodeKeys + (index * list->source->nodeSize);
 }
 
 /********************************************/
@@ -416,8 +414,7 @@ void ASNeighborListAdd(ASNeighborList list, void* node, float edgeCost)
         list->nodeKeys = realloc(list->nodeKeys, list->source->nodeSize * list->capacity);
     }
     list->costs[list->count] = edgeCost;
-    auto keys = list->nodeKeys;
-    memcpy(keys + (list->count * list->source->nodeSize), node, list->source->nodeSize);
+    memcpy((char*)list->nodeKeys + (list->count * list->source->nodeSize), node, list->source->nodeSize);
     list->count++;
 }
 

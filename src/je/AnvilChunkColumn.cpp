@@ -3,6 +3,8 @@
 #define RAISE_ERROR
 #define _ASSERT
 
+#include "WorldProvider.h"
+
 bool AnvilChunkColumn::isLightPopulated() {
 	return false;
 }
@@ -143,6 +145,19 @@ bool AnvilChunkColumn::setSkyLight(int x, int y, int z, char lightLevel) {
 	return true;
 }
 
+BlockProps AnvilChunkColumn::getBlockProperties(int x, int y, int z) {
+	SECTION_CHECK;
+
+	return chunk->getBlockProperties(x, y & 15, z);
+}
+
+bool AnvilChunkColumn::setBlockProperties(int x, int y, int z, BlockProps properties) {
+	SECTION_CHECK;
+
+	chunk->setBlockProperties(x, y & 15, z, properties);
+	return true;
+}
+
 unsigned char AnvilChunkColumn::getBiome(int x, int z) {
 	return biomes[(x << 4) | z];
 }
@@ -171,6 +186,7 @@ void AnvilChunkColumn::readBiomesFromNetwork(unsigned char* buffer, int length) 
 }
 
 AnvilChunkColumn::~AnvilChunkColumn() {
+	WorldProvider::removeLoadedChunk(this);
 	for (auto section : chunkSections) {
 		delete section;
 	}

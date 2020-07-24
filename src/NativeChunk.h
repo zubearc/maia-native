@@ -4,6 +4,7 @@
 #include <napi.h>
 //#include "je/AnvilChunkColumn.h"
 #include "JSChunkColumn.h"
+#include "JSPathingProvider.h"
 
 /*
 addColumn({
@@ -113,7 +114,9 @@ namespace MaiaChunk {
 
         //exports.Set(Napi::String::New(env, "addChunkColumn"), Napi::Function::New(env, AddChunkColumn));
 
+
         JSChunkColumn::Initialize(env, exports);
+        JSPathingProvider::Initialize(env, exports);
 
         return exports;
     }

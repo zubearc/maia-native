@@ -81,6 +81,10 @@ public:
 
 	bool setSkyLight(int x, int y, int z, char lightLevel);
 
+	BlockProps getBlockProperties(int x, int y, int z);
+
+	bool setBlockProperties(int x, int y, int z, BlockProps properties);
+
 	unsigned char getBiome(int x, int z);
 
 	void setBiome(int x, int z, unsigned char biome);

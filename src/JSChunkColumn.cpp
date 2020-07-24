@@ -4,6 +4,9 @@ const auto sectionCount = 16;
 const auto width = 16;
 const auto length = 16;
 
+#include "je/WorldProvider.h"
+#include "blocks/MinecraftBlockHelper.h"
+
 #ifndef _ASSERT
 #define _ASSERT
 #endif
@@ -28,6 +31,9 @@ Napi::Object JSChunkColumn::Initialize(Napi::Env& env, Napi::Object& target) {
           //InstanceMethod("setSkyLight", &SetSkyLight),
         });
     target.Set("Chunk", constructor);
+
+    MinecraftBlockHolder::init();
+
     return target;
 }
 
@@ -91,14 +97,8 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
                 loadedStr += std::to_string(sectioni) + ", ";
                 //printf("Reading chunk section %d\n", sectioni);
                 auto section = new JChunkSection18(sectioni);
-                //printf("Created %d\n", sectioni);
-                //const sectionBuffer = Buffer.alloc(SECTION_SIZE)
-                //offset += data.copy(sectionBuffer, 0, offset, offset + w * l * sh * 2)
-                // offsetLight += data.copy(sectionBuffer, w * l * sh * 2, offsetLight, offsetLight + w * l * sh / 2)
-                //if (this.skyLightSent) offsetSkyLight += data.copy(sectionBuffer, w * l * sh * 5 / 2, offsetLight, offsetSkyLight + w * l * sh / 2)
-                    //this.sections[i].load(sectionBuffer, skyLightSent)
+                section->initializeBlockProperties();
 
-                //memcpy(section->blocks.data(), data.Data() + offset, 16 * 16 * 16 * 2);
                 section->readBlocksFromNetwork(data.Data() + offset, 16 * 16 * 16 * 2);
                 offset += 16 * 16 * 16 * 2;
                 //printf("Read Blocks %d\n", offset);
@@ -124,7 +124,7 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
         auto current = sections[i];
         if (next) {
             if (next->getY() < current->getY()) {
-                printf("ERROR!\n", sections.size());
+                printf("ERROR! Out of order chunks.\n", sections.size());
                 _ASSERT(false);
             }
         }
@@ -135,6 +135,8 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
     this->column->x = chunkx;
     this->column->z = chunkz;
     this->column->setChunkSections(sections);
+
+    WorldProvider::addLoadedChunk(this->column);
 
     if (fullChunk) {
         this->column->readBiomesFromNetwork(data.Data() + offset, 256);
@@ -147,7 +149,7 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
 
     auto expectedSize = sectionSize * chunkCount + (fullChunk ? 16 * 16 : 0);
     if (data.Length() != expectedSize) {
-        Napi::TypeError::New(env, "Data buffer not correct size(was " + std::to_string(data.Length()) + ", expected " + std::to_string(expectedSize)).ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "Data buffer not correct size, was " + std::to_string(data.Length()) + ", expected " + std::to_string(expectedSize)).ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
 
