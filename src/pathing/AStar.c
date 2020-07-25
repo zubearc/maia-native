@@ -31,6 +31,10 @@
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+
+// Optimization: Force 32bit size_t = less data to be copied, faster integer math
+#define size_t AInt
 
 struct __ASNeighborList {
     const ASPathNodeSource* source;
@@ -253,6 +257,13 @@ static inline Node GetNode(VisitedNodes nodes, void* nodeKey)
                 return NodeMake(nodes, nodes->nodeRecordsIndex[mid]);
             }
         }
+
+        /*for (int i = 0; i < nodes->nodeRecordsCount; i++) {
+            Node node = NodeMake(nodes, nodes->nodeRecordsIndex[i]);
+            if (NodeKeyCompare(NodeMake(nodes, nodes->nodeRecordsIndex[i]), nodeKey) == 0) {
+                return node;
+            }
+        }*/
     }
 
     if (nodes->nodeRecordsCount == nodes->nodeRecordsCapacity) {
@@ -265,6 +276,7 @@ static inline Node GetNode(VisitedNodes nodes, void* nodeKey)
     nodes->nodeRecordsCount++;
 
     memmove(&nodes->nodeRecordsIndex[first + 1], &nodes->nodeRecordsIndex[first], (nodes->nodeRecordsCapacity - first - 1) * sizeof(size_t));
+    //nodes->nodeRecordsIndex[nodes->nodeRecordsCount++] = node.index;
     nodes->nodeRecordsIndex[first] = node.index;
 
     NodeRecord* record = NodeGetRecord(node);

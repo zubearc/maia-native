@@ -29,8 +29,8 @@ struct Move {
 	BlockRef toBreak[3];
 	BlockRef toPlace[3];
 
-	char numToBreak;
-	char numToPlace;
+	char numToBreak = 0;
+	char numToPlace = 0;
 
 	//cant use vector because A* lib uses memcpy
 	//c arrays are faster anyways, no big deal.

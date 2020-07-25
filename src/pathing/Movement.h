@@ -9,15 +9,14 @@
 using namespace MinecraftBlockHolder;
 
 class Movements {
+public:
 	int digCost = 6;
 	int placeCost = 4;
-	int maxDropDown = 4;
+	int maxDropDown = 3;
 	bool allowPlacing = false;
 	bool allowBreaking = false;
 
 	bool dontCreateFlow = true;
-
-public:
 
 	Movements() {
 		//this.graph = graph;
@@ -106,9 +105,6 @@ public:
 	}
 
 	float safeOrBreak(BlockRef block, BlockRef *toBreak, char &numToBreak) {
-
-		//if (block.x == 198 && block.y == 63 && block.z == 212) _ASSERT(false);
-
 		if (IS_PASSABLE(block.properties)) return 0;
 		if (!this->allowBreaking) return 100;
 		if (!this->safeToBreak(block)) return 100; // Can't break, so can't move
@@ -132,11 +128,13 @@ public:
 		auto blockB = this->getBlock(block, dx, 1, dz);
 		auto blockC = this->getBlock(block, dx, 0, dz);
 
-		float cost = 2.0f; // move cost (move+jump)
-		BlockRef toBreak[3];
-		BlockRef toPlace[3];
-		char numToBreak = 0;
-		char numToPlace = 0;
+		Move move;
+
+		move.cost = 2.0f; // move cost (move+jump)
+		//BlockRef toBreak[3];
+		//BlockRef toPlace[3];
+		move.numToBreak = 0;
+		move.numToPlace = 0;
 
 		if (!IS_SOLID(blockC.properties)) {
 			if (!this->allowPlacing) return;
@@ -147,23 +145,32 @@ public:
 			if (!IS_SOLID(blockD.properties)) {
 				// if (node.remainingBlocks === 1) return // not enough blocks to place
 				// toPlace.push({ x: node.x, y: node.y - 1, z: node.z, dx: dir.x, dy: 0, dz: dir.z })
-				toPlace[numToPlace++] = BlockRef{ blockD.properties, blockD.x, blockD.y, blockD.z, -dx, 0, -dz };
-				cost += this->placeCost; // additional cost for placing a block
+				move.toPlace[move.numToPlace++] = BlockRef{ blockD.properties, blockD.x, blockD.y, blockD.z, -dx, 0, -dz };
+				move.cost += this->placeCost; // additional cost for placing a block
 			}
 
 				// toPlace.push({ x: node.x + dir.x, y: node.y - 1, z: node.z + dir.z, dx: 0, dy: 1, dz: 0 })
-			toPlace[numToPlace++] = BlockRef{ blockC.properties, blockC.x, blockC.y, blockC.z, dx, -1, -dz };
-			cost += this->placeCost; // additional cost for placing a block
+			move.toPlace[move.numToPlace++] = BlockRef{ blockC.properties, blockC.x, blockC.y, blockC.z, dx, -1, -dz };
+			move.cost += this->placeCost; // additional cost for placing a block
 		}
 
-		cost += this->safeOrBreak(blockA, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockH, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockB, toBreak, numToBreak);
-		if (cost > 100) return;
-		neighbors.push_back(Move{ blockB.x, blockB.y, blockB.z, blockB.blockId, blockB.blockMetadata, 
-			99, cost, blockB.properties, /*toBreak, toPlace*/ });
+		move.cost += this->safeOrBreak(blockA, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockH, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockB, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+
+		move.x = blockB.x; 
+		move.y = blockB.y; 
+		move.z = blockB.z;
+		move.blockId = blockB.blockId;
+		move.blockMetadata = blockB.blockMetadata;
+		move.remainingBlocks = 99;
+		move.props = blockB.properties;
+		neighbors.push_back(move);
+		//neighbors.push_back(Move{ blockB.x, blockB.y, blockB.z, blockB.blockId, blockB.blockMetadata, 
+		//	99, cost, blockB.properties, /*toBreak, toPlace*/ });
 	}
 
 	void getMoveCardinal(Move block, char dx, char dz, std::vector<Move> &neighbors) {
@@ -172,11 +179,13 @@ public:
 		auto blockD = this->getBlock(block, dx, -1, dz);
 			// console.log('blocks', blockB, blockC, blockD);
 
-		float cost = 1.0f; // move cost
-		BlockRef toBreak[3];
-		BlockRef toPlace[3];
-		char numToBreak = 0;
-		char numToPlace = 0;
+		Move move;
+
+		move.cost = 1.0f; // move cost
+		//BlockRef toBreak[3];
+		//BlockRef toPlace[3];
+		move.numToBreak = 0;
+		move.numToPlace = 0;
 
 		//printf("GetCardinal %d %d %d %d, %d\n", dx, dz, neighbors.size(), blockD.properties, blockC.properties);
 		//printf("Props %d %d\n", IS_SOLID(blockD.properties), IS_LIQUID(blockC.properties));
@@ -185,25 +194,34 @@ public:
 			if (!this->allowPlacing) return;
 				// if (node.remainingBlocks === 0) return // not enough blocks to place
 				// toPlace.push({ type: 'cardinal', x: node.x, y: node.y - 1, z: node.z, dx: dir.x, dy: 0, dz: dir.z })
-			toPlace[numToPlace++] = BlockRef{ blockD.properties, blockD.x, blockD.y, blockD.z, -dx, 0, -dz };
+			move.toPlace[move.numToPlace++] = BlockRef{ blockD.properties, blockD.x, blockD.y, blockD.z, -dx, 0, -dz };
 
-			cost += this->placeCost; // additional cost for placing a block
+			move.cost += this->placeCost; // additional cost for placing a block
 		}
 
 		//printf("Working! %d %d %d\n", dx, dz, neighbors.size());
 
-		cost += this->safeOrBreak(blockB, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockC, toBreak, numToBreak);
-		if (cost > 100) return;
+		move.cost += this->safeOrBreak(blockB, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockC, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
 
 		//printf("Good! %d %d %d\n", dx, dz, neighbors.size());
 
 
 		//if (blockC.x == 198 && blockC.y == 63 && blockC.z == 212) _ASSERT(false);
 
-		neighbors.push_back(Move{ blockC.x, blockC.y, blockC.z, blockC.blockId, blockC.blockMetadata,
-			99, cost, blockB.properties, /*toBreak, toPlace*/ });
+		move.x = blockC.x;
+		move.y = blockC.y;
+		move.z = blockC.z;
+		move.blockId = blockC.blockId;
+		move.blockMetadata = blockC.blockMetadata;
+		move.remainingBlocks = 99;
+		move.props = blockC.properties;
+		neighbors.push_back(move);
+
+		//neighbors.push_back(Move{ blockC.x, blockC.y, blockC.z, blockC.blockId, blockC.blockMetadata,
+		//	99, cost, blockB.properties, /*toBreak, toPlace*/ });
 	}
 
 	void getMoveDiagonal(Move block, int dx, int dz, std::vector<Move> &neighbors) {
@@ -217,29 +235,40 @@ public:
 
 		auto blockD = this->getBlock(block, dx, -1, dz);
 
-		float cost = 1.4142f; // move cost
-		BlockRef toBreak[3];
-		char numToBreak = 0;
+		Move move;
+
+		move.cost = 1.4142f; // move cost
+		//BlockRef toBreak[3];
+		move.numToBreak = 0;
 
 		if (!IS_SOLID(blockD.properties)) return; // we don't place blocks in diagonal
 
-		cost += this->safeOrBreak(blockB1, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockB2, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockC1, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockC2, toBreak, numToBreak);
-		if (cost > 100) return;
+		move.cost += this->safeOrBreak(blockB1, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockB2, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockC1, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockC2, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
 
-		cost += this->safeOrBreak(blockC, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockB, toBreak, numToBreak);
-		if (cost > 100) return;
+		move.cost += this->safeOrBreak(blockC, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockB, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+
+		move.x = blockC.x;
+		move.y = blockC.y;
+		move.z = blockC.z;
+		move.blockId = blockC.blockId;
+		move.blockMetadata = blockC.blockMetadata;
+		move.remainingBlocks = 99;
+		move.props = blockC.properties;
+		neighbors.push_back(move);
 
 		//neighbors.push(new Move(blockC.x, blockC.y, blockC.z, node.remainingBlocks, cost, toBreak))
-		neighbors.push_back(Move{ blockC.x, blockC.y, blockC.z, blockC.blockId, blockC.blockMetadata,
-			99, cost, blockB.properties, /*toBreak*/ });
+		//neighbors.push_back(Move{ blockC.x, blockC.y, blockC.z, blockC.blockId, blockC.blockMetadata,
+		//	99, cost, blockB.properties, /*toBreak*/ });
 	}
 
 	BlockRef getLandingBlock(Move block, int dx, int dz) {
@@ -256,11 +285,13 @@ public:
 		auto blockC = this->getBlock(block, dx, 0, dz);
 		auto blockD = this->getBlock(block, dx, -1, dz);
 
-		float cost = 1.0f; // move cost
-		BlockRef toBreak[3];
-		BlockRef toPlace[3];
-		char numToBreak = 0;
-		char numToPlace = 0;
+		Move move;
+
+		move.cost = 1.0f; // move cost
+		//BlockRef toBreak[3];
+		//BlockRef toPlace[3];
+		//numToBreak = 0;
+		//char numToPlace = 0;
 
 
 		auto blockLand = this->getLandingBlock(block, dx, dz);
@@ -273,17 +304,17 @@ public:
 
 			auto blockC = this->getBlock(blockLand, 0, -1, 0); // Block underneath
 			if (IS_SOLID(blockC.properties)) {
-				toPlace[numToPlace++] = { blockLand.properties, blockLand.x, blockLand.y, blockLand.z, 0, -1, 0 };
-				cost += this->placeCost; // additional cost for placing a block
+				move.toPlace[move.numToPlace++] = { blockLand.properties, blockLand.x, blockLand.y, blockLand.z, 0, -1, 0 };
+				move.cost += this->placeCost; // additional cost for placing a block
 			} else {
 
 
 #define GET_ADJACENT_BLOCK(Name, DX, DZ) \
-				if (numToPlace == 0) { \
+				if (move.numToPlace == 0) { \
 					BlockRef block##Name = this->getBlock(blockLand, DX, 0, DZ); /* Block adjacent */ \
-					if (IS_SOLID(blockB.properties)) { \
-						toPlace[numToPlace++] = { blockB.properties, blockLand.x, blockLand.y, blockLand.z, DX, 0, DZ }; \
-						cost += this->placeCost; /* additional cost for placing a block */ \
+					if (IS_SOLID(block##Name.properties)) { \
+						move.toPlace[move.numToPlace++] = { blockB.properties, blockLand.x, blockLand.y, blockLand.z, DX, 0, DZ }; \
+						move.cost += this->placeCost; /* additional cost for placing a block */ \
 					} \
 				}
 
@@ -296,44 +327,65 @@ public:
 
 			// If we didn't place anything & block below player's next move is passable,
 			// abort this operation.
-			if (IS_PASSABLE(blockLand.properties) && numToPlace == 0) {
+			if (IS_PASSABLE(blockLand.properties) && move.numToPlace == 0) {
 				return;
 			}
 		}
 
-		cost += this->safeOrBreak(blockB, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockC, toBreak, numToBreak);
-		if (cost > 100) return;
-		cost += this->safeOrBreak(blockD, toBreak, numToBreak);
-		if (cost > 100) return;
+		move.cost += this->safeOrBreak(blockB, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockC, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
+		move.cost += this->safeOrBreak(blockD, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
 
-		printf("DD %d,%d,%d %d\n", blockLand.x, blockLand.y, blockLand.z, cost);
+		//printf("DD %d,%d,%d %d\n", blockLand.x, blockLand.y, blockLand.z, move.cost);
+
+		move.x = blockLand.x;
+		move.y = blockLand.y + 1;
+		move.z = blockLand.z;
+		move.blockId = blockLand.blockId;
+		move.blockMetadata = blockLand.blockMetadata;
+		move.remainingBlocks = 99;
+		move.props = blockLand.properties;
+		neighbors.push_back(move);
 
 		//neighbors.push_back(Move{ blockLand.x, blockLand.y + 1, blockLand.z, node.remainingBlocks - toPlace.length, cost, toBreak, toPlace))
-		neighbors.push_back(Move{ blockLand.x, blockLand.y + 1, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
-			99, cost, blockLand.properties, /*toBreak, toPlace*/ });
+		//neighbors.push_back(Move{ blockLand.x, blockLand.y + 1, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
+		//	99, cost, blockLand.properties, /*toBreak, toPlace*/ });
 	}
 
 	void getMoveDown(Move &block, std::vector<Move> &neighbors) {
 		auto block0 = this->getBlock(block, 0, -1, 0);
 
-		float cost = 1.0f; // move cost
-		BlockRef toBreak[3];
-		BlockRef toPlace[3];
-		char numToBreak = 0;
-		char numToPlace = 0;
+		Move move;
+
+		move.cost = 1.0f; // move cost
+		//BlockRef toBreak[3];
+		//BlockRef toPlace[3];
+		move.numToBreak = 0;
+		move.numToPlace = 0;
 
 		auto blockLand = this->getLandingBlock(block, 0, 0);
 		if (!IS_SOLID(blockLand.properties)) return;
 
-		cost += this->safeOrBreak(block0, toBreak, numToBreak);
-		if (cost > 100) return;
+		move.cost += this->safeOrBreak(block0, move.toBreak, move.numToBreak);
+		if (move.cost > 100) return;
 
 		//neighbors.push(new Move(blockLand.x, blockLand.y + 1, blockLand.z, node.remainingBlocks - toPlace.length, cost, toBreak, toPlace))
 
-		neighbors.push_back(Move{ blockLand.x, blockLand.y, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
-	99, cost, blockLand.properties, /*toBreak, toPlace*/ });
+		move.x = blockLand.x;
+		move.y = blockLand.y;
+		move.z = blockLand.z;
+		move.blockId = blockLand.blockId;
+		move.blockMetadata = blockLand.blockMetadata;
+		move.remainingBlocks = 99;
+		move.props = blockLand.properties;
+		neighbors.push_back(move);
+
+
+//		neighbors.push_back(Move{ blockLand.x, blockLand.y, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
+//	99, cost, blockLand.properties, /*toBreak, toPlace*/ });
 	}
 
 	/*void getMoveUp(node, neighbors) {

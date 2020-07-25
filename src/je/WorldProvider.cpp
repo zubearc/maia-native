@@ -5,6 +5,9 @@ namespace WorldProvider {
 
 	std::map<uint64_t, AnvilChunkColumn*> loadedAnvilChunks;
 
+	uint64_t lastChunkIndex = 0;
+	AnvilChunkColumn* lastChunk = 0;
+
 	inline uint64_t getIndex(int x, int z) {
 		uint64_t i = ((uint64_t)x << 31) | (uint64_t)z & 0xffffffff;
 		return i;
@@ -31,6 +34,8 @@ namespace WorldProvider {
 				loadedAnvilChunks.erase(it);
 			}
 		}
+		lastChunk = 0;
+		lastChunkIndex = 0;
 	}
 
 	void removeLoadedChunk(int chunkX, int chunkZ) {
@@ -42,6 +47,8 @@ namespace WorldProvider {
 				loadedAnvilChunks.erase(it);
 			}
 		}
+		lastChunk = 0;
+		lastChunkIndex = 0;
 	}
 
 	bool isChunkLoaded(int chunkX, int chunkZ) {
@@ -64,12 +71,18 @@ namespace WorldProvider {
 		auto i = getIndex(cx, cz);
 		printf("CX: %d, CZ: %d -> %lld\n", cx, cz, i);
 
+		if (lastChunk && lastChunkIndex == i) {
+			return lastChunk;
+		}
+
 		if (loadedAnvilChunks.find(i) == loadedAnvilChunks.end()) {
 			// not found
 			return 0;
 		} else {
 			// found
 			auto chunk = loadedAnvilChunks[i];
+			lastChunkIndex = i;
+			lastChunk = chunk;
 			if (chunk->chunkSections.size() > cy) {
 				printf("ACX: %d, ACZ: %d\n", chunk->getX(), chunk->getZ());
 				return chunk;

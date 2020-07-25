@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include "AnvilChunkColumn.h"
+#include "../Utils.h"
 
 // When we load different "dimensions" we unload all the previous dimensions' chunks
 // So we do not have to worry about that complexity here and use a single WorldProvider
@@ -11,6 +12,10 @@ namespace WorldProvider {
 
 	//std::vector<AnvilChunkColumn*> loadedAnvilChunks;
 	extern std::map<uint64_t, AnvilChunkColumn*> loadedAnvilChunks;
+
+	// Quick access last chunk
+	extern uint64_t lastChunkIndex;
+	extern AnvilChunkColumn* lastChunk;
 
 	void addLoadedChunk(AnvilChunkColumn* col);
 
