@@ -4,8 +4,6 @@
 
 Napi::Object JSPathingProvider::Initialize(Napi::Env& env, Napi::Object& target) {
     Napi::Function constructor = DefineClass(env, "Pathing", {
-        //InstanceAccessor("value", &GetSomething, &SetSomething),
-
           InstanceMethod("getPathToBlock", &JSPathingProvider::GetPathToBlock),
           InstanceMethod("test", &JSPathingProvider::Test),
         });
@@ -18,6 +16,8 @@ JSPathingProvider::JSPathingProvider(const Napi::CallbackInfo& info) : Napi::Obj
 }
 
 Napi::Value JSPathingProvider::GetPathToBlock(const Napi::CallbackInfo& info) {
+    auto env = info.Env();
+
     int x1 = info[0].As<Napi::Number>().Int32Value();
     int y1 = info[1].As<Napi::Number>().Int32Value();
     int z1 = info[2].As<Napi::Number>().Int32Value();
@@ -26,7 +26,28 @@ Napi::Value JSPathingProvider::GetPathToBlock(const Napi::CallbackInfo& info) {
     int y2 = info[4].As<Napi::Number>().Int32Value();
     int z2 = info[5].As<Napi::Number>().Int32Value();
 
-    auto moves = astar(x1, y1, z1, x2, y2, z2);
+    auto options = info[6].As<Napi::Object>();
+
+    if (info.Length() < 6) {
+        Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+    bool breaking = false;
+    bool placing = false;
+
+    // Note: allowPlacing or allowBreaking cannot be false. Must be undefined or it will be assumed as true.
+    if (options.Has("allowPlacing")) {
+        placing = true;
+    }
+    
+    if (options.Has("allowBreaking")) {
+        breaking = true;
+    }
+
+    auto moves = astar(x1, y1, z1, x2, y2, z2, breaking, placing);
+
+    printf("\nPathing (%d %d %d) -> (%d %d %d)\n", x1, y1, z1, x2, y2, z2);
 
     Napi::Array jsmoves = Napi::Array::New(info.Env(), moves.size());
     
@@ -77,14 +98,13 @@ Napi::Value JSPathingProvider::GetPathToBlock(const Napi::CallbackInfo& info) {
 
         jsmove.Set("toPlace", toPlace);
         jsmove.Set("toBreak", toBreak);
+
+        jsmove.Set("Debug", move.remainingBlocks);
         
         jsmoves[i] = jsmove;
     }
 
     return jsmoves;
-
-    //
-    //return Napi::Value();
 }
 
 void JSPathingProvider::Test(const Napi::CallbackInfo& info) {

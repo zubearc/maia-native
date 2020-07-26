@@ -69,7 +69,6 @@ namespace WorldProvider {
 		auto cz = worldZ >> 4;
 		auto cy = worldY >> 4;
 		auto i = getIndex(cx, cz);
-		printf("CX: %d, CZ: %d -> %lld\n", cx, cz, i);
 
 		if (lastChunk && lastChunkIndex == i) {
 			return lastChunk;
@@ -84,7 +83,6 @@ namespace WorldProvider {
 			lastChunkIndex = i;
 			lastChunk = chunk;
 			if (chunk->chunkSections.size() > cy) {
-				printf("ACX: %d, ACZ: %d\n", chunk->getX(), chunk->getZ());
 				return chunk;
 			}
 			return 0;
@@ -102,7 +100,6 @@ namespace WorldProvider {
 		auto sz = worldZ & 15;
 		blockId = chunk->getBlockId(sx, worldY, sz);
 		blockMetadata = chunk->getBlockMetadata(sx, worldY, sz);
-		printf("[%d, %d] X: %d, Y: %d, Z: %d -> %d:%d\n", chunk->getX(), chunk->getZ(), worldX, worldY, worldZ, blockId, blockMetadata);
 		return true;
 	}
 
@@ -115,6 +112,30 @@ namespace WorldProvider {
 		//auto sy = worldY & 15; // <-- this is calculated already in getBlockId in AnvilChunkColumn
 		auto sz = worldZ & 15;
 		blockId = chunk->getBlockId(sx, worldY, sz);
+		return true;
+	}
+
+	bool setBlockId(int worldX, int worldY, int worldZ, char blockId) {
+		auto chunk = getChunkAt(worldX, worldY, worldZ);
+		if (!chunk) {
+			return false;
+		}
+		auto sx = worldX & 15;
+		//auto sy = worldY & 15; // <-- this is calculated already in getBlockId in AnvilChunkColumn
+		auto sz = worldZ & 15;
+		chunk->setBlockId(sx, worldY, sz, blockId);
+		return true;
+	}
+
+	bool setBlockMetadata(int worldX, int worldY, int worldZ, char metadata) {
+		auto chunk = getChunkAt(worldX, worldY, worldZ);
+		if (!chunk) {
+			return false;
+		}
+		auto sx = worldX & 15;
+		//auto sy = worldY & 15; // <-- this is calculated already in getBlockId in AnvilChunkColumn
+		auto sz = worldZ & 15;
+		chunk->setBlockMetadata(sx, worldY, sz, metadata);
 		return true;
 	}
 

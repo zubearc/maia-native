@@ -24,8 +24,6 @@ public:
     void SetBlockBiome(const Napi::CallbackInfo& info);
     void SetBlockStateId(const Napi::CallbackInfo& info);
 
-    //Napi::Value DoSomething(const Napi::CallbackInfo& info);
-
     ~JSChunkColumn() {
         delete column;
     }

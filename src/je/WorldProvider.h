@@ -10,7 +10,6 @@
 
 namespace WorldProvider {
 
-	//std::vector<AnvilChunkColumn*> loadedAnvilChunks;
 	extern std::map<uint64_t, AnvilChunkColumn*> loadedAnvilChunks;
 
 	// Quick access last chunk
@@ -30,10 +29,12 @@ namespace WorldProvider {
 	bool getBlock(int worldX, int worldY, int worldZ, short &blockId, short &blockMetadata);
 	bool getBlockId(int worldX, int worldY, int worldZ, short& blockId);
 
-	//bool setBlockId(int worldX, int worldY, int worldZ, char blockId);
-	//bool setBlockMetadata(int worldX, int worldY, int worldZ, char metadata);
+	bool setBlockId(int worldX, int worldY, int worldZ, char blockId);
+	
+	bool setBlockMetadata(int worldX, int worldY, int worldZ, char metadata);
 
 	BlockProps getBlockProperties(int worldX, int worldY, int worldZ);
+	
 	//float getBlockHardness(int worldX, int worldY, int worldZ);
 
 	bool setBlockProperties(int worldX, int worldY, int worldZ, BlockProps props);

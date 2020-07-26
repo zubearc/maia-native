@@ -20,51 +20,17 @@ public:
 	bool dontCreateFlow = true;
 
 	Movements() {
-		//this.graph = graph;
-
 		this->digCost = 6;
 		this->placeCost = 4;
-		// this.dontCreateFlow = true
-		// this.allow1by1towers = true
-		// this.allowFreeMotion = false
-		// this.allowParkour = true
-
 		this->allowPlacing = false;
 		this->allowBreaking = false;
-
-		// this.maxDropDown = 4
 	}
-
-	// countScaffoldingItems() {
-	//     let count = 0
-	//     const items = this.bot.inventory.items()
-	//     for (const id of this.scafoldingBlocks) {
-	//         for (const j in items) {
-	//             const item = items[j]
-	//             if (item.type === id) count += item.count
-	//         }
-	//     }
-	//     return count
-	// }
-
-	// getScaffoldingItem() {
-	//     const items = this.bot.inventory.items()
-	//     for (const id of this.scafoldingBlocks) {
-	//         for (const j in items) {
-	//             const item = items[j]
-	//             if (item.type === id) return item
-	//         }
-	//     }
-	//     return null
-	// }
 
 	void printBlockInfo(BlockRef ref) {
 		auto blockProperties = ref.properties;
 		printf("(%d %d %d) %d: Air=%d, Solid=%d, Destroy=%d, Transparent=%d, Avoid=%d, Water=%d\n", ref.x,ref.y,ref.z, ref.blockId, (blockProperties & BlockProp::AIR) > 0, (blockProperties & BlockProp::SOLID) > 0,
 			(blockProperties & BlockProp::DESTROYABLE) > 0, (blockProperties & BlockProp::TRANSPARENT) > 0, (blockProperties & BlockProp::AVOID) > 0, (blockProperties & BlockProp::WATER) > 0);
 	}
-
-
 
 	BlockRef getBlock(int x, int y, int z, int dx, int dy, int dz) {
 		auto X = x + dx;
@@ -78,10 +44,6 @@ public:
 		if (!WorldProvider::getBlock(X, Y, Z, blockId, blockMetadata)) {
 			return {}; // Flags would be marked unknown
 		}
-
-		//printf("(%d %d %d) %d: Air=%d, Solid=%d, Destroy=%d, Transparent=%d\n", X,Y,Z, blockId, (blockProperties & BlockProp::AIR) > 0, (blockProperties & BlockProp::SOLID) > 0,
-		//	(blockProperties & BlockProp::DESTROYABLE) > 0, (blockProperties & BlockProp::TRANSPARENT) > 0);
-
 
 		return { blockProperties, x + dx, y + dy, z + dz, blockId, blockMetadata };
 	}
@@ -100,7 +62,7 @@ public:
 // Tells us if we can walk through the block
 #define IS_TRANSPARENT(BLOCK) (BLOCK & BlockProp::TRANSPARENT)
 // Tells us if if water
-#define IS_LIQUID(BLOCK) (BLOCK & BlockProp::WATER)
+#define IS_LIQUID(BLOCK) (BLOCK & BlockProp::WATER) //<-- this should probably be IS_WATER! Currently flowing lava is ignored in safeToBreak.
 // Tells us if we can break the block
 #define IS_BREAKABLE(BLOCK) (BLOCK & BlockProp::DESTROYABLE)
 // Tell us if we can place if the block is air or is transparent, breakable and we can place ontop of it
@@ -121,6 +83,7 @@ public:
 	bool safeToBreak(BlockRef &block) {
 		if (this->dontCreateFlow) {
 			// false if next to liquid
+			// TODO: Make this support lava.
 			if (IS_LIQUID(this->getBlock(block, 0, 1, 0).properties)) return false;
 			if (IS_LIQUID(this->getBlock(block, -1, 0, 0).properties)) return false;
 			if (IS_LIQUID(this->getBlock(block, 1, 0, 0).properties)) return false;
@@ -128,23 +91,20 @@ public:
 			if (IS_LIQUID(this->getBlock(block, 0, 0, 1).properties)) return false;
 		}
 		return IS_BREAKABLE(block.properties);
-		// TODO: break exclusion areas
 	}
 
 	// Called when we may have to break (assumed non-solid) block and replace with a block 
 	float breakForReplace(BlockRef &block, BlockRef* toBreak, char& numToBreak) {
 		auto blockProperties = block.properties;
-		//printf("%d: Air=%d, Solid=%d, Destroy=%d, Transparent=%d\n", block.blockId, (blockProperties & BlockProp::AIR) > 0, (blockProperties & BlockProp::SOLID) > 0,
-		//	(blockProperties & BlockProp::DESTROYABLE) > 0, (blockProperties & BlockProp::TRANSPARENT) > 0);
-
 		
-		// If blockD is a transparent block, it must be broken & replaced (if possible) with a solid block.
+		// If block is a transparent block, it must be broken & replaced (if possible) with a solid block.
 		// maybe it's a sign or a torch. some transparent blocks we don't want to destory like rails.
 		// If we have a DENY block (eg Lava) and it's not marked as SOLID and it's TRANSPARENT, we can place ontop of it.
 		if (IS_TRANSPARENT(block.properties) && !IS_AVOID(block.properties)) {
 			if (!this->allowBreaking) return 100;
 
 			if (IS_BREAKABLE(block.properties)) {
+				// TODO: This should getBlockDig cost, not do a simple hardness check
 				auto digTime = MinecraftBlockHolder::getJavaBlockHardness(block.blockId, block.blockMetadata);
 
 				// return (1 + 3 * digTime / 1000) * this.digCost
@@ -162,7 +122,7 @@ public:
 	}
 
 	// Called when we want to break a block
-	float safeOrBreak(BlockRef block, BlockRef *toBreak, char &numToBreak) {
+	float safeOrBreak(BlockRef &block, BlockRef *toBreak, char &numToBreak) {
 		// Lava blocks are PASSABLE (so can place ontop of) but also AVOID so we can't pass through them. 
 		// They're not BREAKABLE though so this returns 100.
 		if (IS_PASSABLE(block.properties) && !IS_AVOID(block.properties)) return 0;
@@ -175,18 +135,13 @@ public:
 		
 		toBreak[numToBreak++] = block;
 
-			// const tool = this.bot.pathfinder.bestHarvestTool(block)
-			// const enchants = (tool && tool.nbt) ? nbt.simplify(tool.nbt).Enchantments : []
-			// const effects = this.bot.entity.effects
-			// const digTime = block.digTime(tool ? tool.type : null, false, false, false, enchants, effects)
-
 		auto digTime = MinecraftBlockHolder::getJavaBlockHardness(block.blockId, block.blockMetadata);
 
 		// return (1 + 3 * digTime / 1000) * this.digCost
 		return digTime + this->digCost;
 	}
 
-	void getMoveJumpUp(Move block, char dx, char dz, std::vector<Move> &neighbors) {
+	void getMoveJumpUp(Move &block, char dx, char dz, std::vector<Move> &neighbors) {
 		auto blockA = this->getBlock(block, 0, 2, 0);
 		auto blockH = this->getBlock(block, dx, 2, dz);
 		auto blockB = this->getBlock(block, dx, 1, dz);
@@ -195,8 +150,6 @@ public:
 		Move move;
 
 		move.cost = 2.0f; // move cost (move+jump)
-		//BlockRef toBreak[3];
-		//BlockRef toPlace[3];
 		move.numToBreak = 0;
 		move.numToPlace = 0;
 
@@ -225,18 +178,13 @@ public:
 			}
 		} else if (!IS_SOLID(blockC.properties)) {
 			if (!this->allowPlacing) return;
-				// if (node.remainingBlocks === 0) return // not enough blocks to place
 
 			move.cost += breakForReplace(blockC, move.toBreak, move.numToBreak);
 			if (move.cost > 100) return;
 
-			// TODO: avoid entities as part of placing blocks
 			auto blockD = this->getBlock(block, dx, -1, dz);
 						
-			if (!IS_SOLID(blockD.properties)) {
-				// if (node.remainingBlocks === 1) return // not enough blocks to place
-				// toPlace.push({ x: node.x, y: node.y - 1, z: node.z, dx: dir.x, dy: 0, dz: dir.z })
-				
+			if (!IS_SOLID(blockD.properties)) {				
 				move.cost += breakForReplace(blockD, move.toBreak, move.numToBreak);
 				if (move.cost > 100) return;
 				
@@ -244,7 +192,6 @@ public:
 				move.cost += this->placeCost; // additional cost for placing a block
 			}
 
-				// toPlace.push({ x: node.x + dir.x, y: node.y - 1, z: node.z + dir.z, dx: 0, dy: 1, dz: 0 })
 			move.toPlace[move.numToPlace++] = BlockRef{ blockC.properties, blockC.x, blockC.y, blockC.z, dx, -1, -dz };
 			move.cost += this->placeCost; // additional cost for placing a block
 		}
@@ -264,11 +211,9 @@ public:
 		move.remainingBlocks = 169;
 		move.props = blockB.properties;
 		neighbors.push_back(move);
-		//neighbors.push_back(Move{ blockB.x, blockB.y, blockB.z, blockB.blockId, blockB.blockMetadata, 
-		//	99, cost, blockB.properties, /*toBreak, toPlace*/ });
 	}
 
-	void getMoveCardinal(Move block, char dx, char dz, std::vector<Move> &neighbors) {
+	void getMoveCardinal(Move &block, char dx, char dz, std::vector<Move> &neighbors) {
 		auto blockB = this->getBlock(block, dx, 1, dz);
 		auto blockC = this->getBlock(block, dx, 0, dz);
 		auto blockD = this->getBlock(block, dx, -1, dz);
@@ -282,9 +227,6 @@ public:
 		move.cost = 1.0f; // move cost
 		move.numToBreak = 0;
 		move.numToPlace = 0;
-
-		//printf("GetCardinal %d %d %d %d, %d\n", dx, dz, neighbors.size(), blockD.properties, blockC.properties);
-		//printf("Props %d %d\n", IS_SOLID(blockD.properties), IS_LIQUID(blockC.properties));
 
 		if (!IS_SOLID(blockD.properties) && !IS_LIQUID(blockC.properties)) { //isn't solid & isn't water
 			if (!this->allowPlacing) return;
@@ -329,7 +271,7 @@ public:
 		neighbors.push_back(move);
 	}
 
-	void getMoveDiagonal(Move block, int dx, int dz, std::vector<Move> &neighbors) {
+	void getMoveDiagonal(Move &block, int dx, int dz, std::vector<Move> &neighbors) {
 		auto blockB = this->getBlock(block, dx, 1, dz);
 		auto blockB1 = this->getBlock(block, 0, 1, dz);
 		auto blockB2 = this->getBlock(block, dx, 1, 0);
@@ -343,7 +285,6 @@ public:
 		Move move;
 
 		move.cost = 1.4142f; // move cost
-		//BlockRef toBreak[3];
 		move.numToBreak = 0;
 
 		if (!IS_SOLID(blockD.properties) && !IS_LIQUID(blockC.properties)) return; // we don't place blocks in diagonal
@@ -383,13 +324,9 @@ public:
 		move.remainingBlocks = 251;
 		move.props = blockC.properties;
 		neighbors.push_back(move);
-
-		//neighbors.push(new Move(blockC.x, blockC.y, blockC.z, node.remainingBlocks, cost, toBreak))
-		//neighbors.push_back(Move{ blockC.x, blockC.y, blockC.z, blockC.blockId, blockC.blockMetadata,
-		//	99, cost, blockB.properties, /*toBreak*/ });
 	}
 
-	BlockRef getLandingBlock(Move block, int dx, int dz) {
+	BlockRef getLandingBlock(Move &block, int dx, int dz) {
 		auto blockLand = this->getBlock(block, dx, -2, dz);
 		if (allowLongDistanceDropsToWater) {
 			for (int y = block.y - 2, i = 0; y > 2; y--, i++) {
@@ -406,7 +343,7 @@ public:
 		return blockLand;
 	}
 
-	void getMoveDropDown(Move block, char dx, char dz, std::vector<Move> &neighbors) {
+	void getMoveDropDown(Move &block, char dx, char dz, std::vector<Move> &neighbors) {
 		auto blockB = this->getBlock(block, dx, 1, dz);
 		auto blockC = this->getBlock(block, dx, 0, dz);
 		auto blockD = this->getBlock(block, dx, -1, dz);
@@ -414,10 +351,6 @@ public:
 		Move move;
 
 		move.cost = 1.0f; // move cost
-		//BlockRef toBreak[3];
-		//BlockRef toPlace[3];
-		//numToBreak = 0;
-		//char numToPlace = 0;
 
 		move.cost += this->safeOrBreak(blockB, move.toBreak, move.numToBreak);
 		if (move.cost > 100) return;
@@ -429,25 +362,16 @@ public:
 
 		auto blockLand = this->getLandingBlock(block, dx, dz);
 
-		//auto deltaY = block.y - blockLand.y;
-		//move.cost += 0.05 * deltaY; // Slight cost the farther we go down so A* can prefer shorter drops
-
-		//printf("LandingBlock: %d %d %d -> %d, %d\n", blockLand.x, blockLand.y, blockLand.z, blockLand.blockId, IS_LIQUID(blockLand.properties));
-
-		//printBlockInfo(blockLand);
-
-		// if (!blockLand.solid) return // TODO: place? (bridging down)
-
-		if (IS_AVOID(blockLand.properties)) { // Dangerious block. Don't even think aout it
+		if (IS_AVOID(blockLand.properties)) { // Dangerious block. Don't even think aout it (or should we? if we can reach block, maybe replace it)
 			return;
 		} else if (!IS_SOLID(blockLand.properties) && !IS_LIQUID(blockLand.properties)) {
 			if (!this->allowPlacing) return;
-				// if (node.remainingBlocks === 0) return // not enough blocks to place
 
 			auto blockC = this->getBlock(blockLand, 0, -1, 0); // Block underneath
 			if (IS_SOLID(blockC.properties)) {
-				// blockLand is unreachable by only 1 block, place block on blockLand to make it reachable
 
+				//???
+				// blockLand is unreachable by only 1 block, place block on blockLand to make it reachable
 				move.cost += breakForReplace(blockLand, move.toBreak, move.numToBreak);
 				if (move.cost > 100) return;
 
@@ -487,8 +411,6 @@ public:
 			move.cost += 2; // We are underwater--do not go any lower
 		}
 
-		//printf("DD %d,%d,%d %d\n", blockLand.x, blockLand.y, blockLand.z, move.cost);
-
 		move.x = blockLand.x;
 		move.y = IS_LIQUID(blockLand.properties) ? blockLand.y : blockLand.y + 1;
 		move.z = blockLand.z;
@@ -497,10 +419,6 @@ public:
 		move.remainingBlocks = 335;
 		move.props = blockLand.properties;
 		neighbors.push_back(move);
-
-		//neighbors.push_back(Move{ blockLand.x, blockLand.y + 1, blockLand.z, node.remainingBlocks - toPlace.length, cost, toBreak, toPlace))
-		//neighbors.push_back(Move{ blockLand.x, blockLand.y + 1, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
-		//	99, cost, blockLand.properties, /*toBreak, toPlace*/ });
 	}
 
 	void getMoveDown(Move &block, std::vector<Move> &neighbors) {
@@ -509,8 +427,6 @@ public:
 		Move move;
 
 		move.cost = 1.0f; // move cost
-		//BlockRef toBreak[3];
-		//BlockRef toPlace[3];
 		move.numToBreak = 0;
 		move.numToPlace = 0;
 
@@ -520,7 +436,6 @@ public:
 		move.cost += this->safeOrBreak(block0, move.toBreak, move.numToBreak);
 		if (move.cost > 100) return;
 
-		//neighbors.push(new Move(blockLand.x, blockLand.y + 1, blockLand.z, node.remainingBlocks - toPlace.length, cost, toBreak, toPlace))
 
 		move.x = blockLand.x;
 		move.y = blockLand.y;
@@ -531,11 +446,9 @@ public:
 		move.props = blockLand.properties;
 		neighbors.push_back(move);
 
-
-//		neighbors.push_back(Move{ blockLand.x, blockLand.y, blockLand.z, blockLand.blockId, blockLand.blockMetadata,
-//	99, cost, blockLand.properties, /*toBreak, toPlace*/ });
 	}
 
+	// Todo: Port
 	/*void getMoveUp(node, neighbors) {
 		const block2 = this._getBlock(node, 0, 2, 0)
 			let cost = 1 // move cost
@@ -618,11 +531,9 @@ public:
 		MOVES(East, 0, -1);
 		MOVES(West, 0, 1);
 			
-		// console.log(dir);
-
-					// if (this.allowParkour) {
-					//     this.getMoveParkourForward(node, dir, neighbors)
-					// }
+		// if (this.allowParkour) {
+		//     this.getMoveParkourForward(node, dir, neighbors)
+		// }
 
 		// Diagonals
 		this->getMoveDiagonal(node, -1, -1, neighbors); //NE
@@ -635,8 +546,6 @@ public:
 		// if (this.allow1by1towers) {
 		//     this.getMoveUp(node, neighbors)
 		// }
-
-		// console.log('Neighbors', node, neighbors);
 
 
 		return neighbors;

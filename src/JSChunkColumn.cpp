@@ -13,7 +13,6 @@ const auto length = 16;
 
 Napi::Object JSChunkColumn::Initialize(Napi::Env& env, Napi::Object& target) {
     Napi::Function constructor = DefineClass(env, "Chunk", {
-        //InstanceAccessor("value", &GetSomething, &SetSomething),
           InstanceMethod("load", &JSChunkColumn::Load),
 
           InstanceMethod("getBlockID", &JSChunkColumn::GetBlockID),
@@ -67,16 +66,12 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, false);
     }
 
-    //printf("#0\n");
-
     int chunkx = info[0].As<Napi::Number>().Int32Value();
     int chunkz = info[1].As<Napi::Number>().Int32Value();
     double bitmap = info[2].As<Napi::Number>().Int32Value();
     double sentSkylight = info[3].As<Napi::Boolean>().ToBoolean();
     double fullChunk = info[4].As<Napi::Boolean>().ToBoolean();
     auto data = info[5].As<Napi::Buffer<uint8_t>>();
-
-    //Napi::Number num = Napi::Number::New(env, arg0 + arg1);
 
     std::vector<JChunkSection*> sections;
 
@@ -86,8 +81,6 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
     auto offset = 0;
     auto offsetLight = width * length * sectionCount * chunkCount * 2;
     auto offsetSkyLight = (sentSkylight) ? width * length * sectionCount * chunkCount / 2 * 5 : 0;
-
-    //printf("#1\n");
 
     std::string loadedStr;
 
@@ -130,8 +123,6 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
         }
     }
 
-    //printf("#2\n");
-
     this->column->x = chunkx;
     this->column->z = chunkz;
     this->column->setChunkSections(sections);
@@ -140,10 +131,7 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
 
     if (fullChunk) {
         this->column->readBiomesFromNetwork(data.Data() + offset, 256);
-        //data.copy(this.biome, 16 * 16 * sectionCount * chunkCount * (sentSkylight ? 3 : 5 / 2))
     }
-
-    //printf("#3\n");
 
     auto sectionSize = (16 * 16 * 16) * (sentSkylight ? 3 : 5 / 2);
 
@@ -152,8 +140,6 @@ Napi::Value JSChunkColumn::Load(const Napi::CallbackInfo& info) {
         Napi::TypeError::New(env, "Data buffer not correct size, was " + std::to_string(data.Length()) + ", expected " + std::to_string(expectedSize)).ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
-
-    //printf("Good data buffer!\n");
 
     return Napi::Boolean::New(env, true);
 }
