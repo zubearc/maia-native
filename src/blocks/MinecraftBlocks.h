@@ -11,7 +11,7 @@ namespace MinecraftBlockHolder {
 		SOLID = 0b10,
 		DESTROYABLE = 0b100,
 		WATER = 0b1000,
-		UNUSED = 0b10000,
+		UNUSED = 0b10000, //TODO: This will become HALF block
 		TRANSPARENT = 0b100000,
 		AVOID = 0b1000000,
 		ADJ_SOLID = 0b10000000

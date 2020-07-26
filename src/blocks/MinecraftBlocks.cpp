@@ -4,7 +4,7 @@ namespace MinecraftBlockHolder {
 	unsigned char* block_properties = new unsigned char[256]();
 	float* block_hardness = new float[256]();
 	void initBlockProperties() {
-		block_properties[0 /* air */] = BlockProp::AIR | BlockProp::TRANSPARENT | 0;
+		block_properties[0 /* air */] = BlockProp::AIR | 0;
 		block_properties[1 /* stone */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[2 /* grass */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[3 /* dirt */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -14,8 +14,8 @@ namespace MinecraftBlockHolder {
 		block_properties[7 /* bedrock */] = BlockProp::SOLID | 0;
 		block_properties[8 /* flowing_water */] = BlockProp::WATER | BlockProp::TRANSPARENT | 0;
 		block_properties[9 /* water */] = BlockProp::WATER | BlockProp::TRANSPARENT | 0;
-		block_properties[10 /* flowing_lava */] = BlockProp::TRANSPARENT | 0;
-		block_properties[11 /* lava */] = BlockProp::TRANSPARENT | 0;
+		block_properties[10 /* flowing_lava */] = BlockProp::TRANSPARENT | BlockProp::AVOID | 0;
+		block_properties[11 /* lava */] = BlockProp::TRANSPARENT | BlockProp::AVOID | 0;
 		block_properties[12 /* sand */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[13 /* gravel */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[14 /* gold_ore */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -35,7 +35,7 @@ namespace MinecraftBlockHolder {
 		block_properties[28 /* detector_rail */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[29 /* sticky_piston */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[30 /* web */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[31 /* tallgrass */] = BlockProp::TRANSPARENT | 0;
+		block_properties[31 /* tallgrass */] = BlockProp::AIR | 0;
 		block_properties[32 /* deadbush */] = BlockProp::TRANSPARENT | 0;
 		block_properties[33 /* piston */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[34 /* piston_head */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -48,15 +48,15 @@ namespace MinecraftBlockHolder {
 		block_properties[41 /* gold_block */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[42 /* iron_block */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[43 /* double_stone_slab */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[44 /* stone_slab */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
+		block_properties[44 /* stone_slab */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[45 /* brick_block */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[46 /* tnt */] = BlockProp::SOLID | 0;
 		block_properties[47 /* bookshelf */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[48 /* mossy_cobblestone */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[49 /* obsidian */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[50 /* torch */] = BlockProp::TRANSPARENT | 0;
-		block_properties[51 /* fire */] = BlockProp::SOLID | 0;
-		block_properties[52 /* mob_spawner */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
+		block_properties[51 /* fire */] = BlockProp::SOLID | BlockProp::AVOID | 0;
+		block_properties[52 /* mob_spawner */] = BlockProp::SOLID | BlockProp::DESTROYABLE | BlockProp::AVOID | 0;
 		block_properties[53 /* oak_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[54 /* chest */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[55 /* redstone_wire */] = BlockProp::TRANSPARENT | 0;
@@ -85,7 +85,7 @@ namespace MinecraftBlockHolder {
 		block_properties[78 /* snow_layer */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[79 /* ice */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[80 /* snow */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[81 /* cactus */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
+		block_properties[81 /* cactus */] = BlockProp::SOLID | BlockProp::DESTROYABLE | BlockProp::AVOID | 0;
 		block_properties[82 /* clay */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[83 /* reeds */] = BlockProp::TRANSPARENT | 0;
 		block_properties[84 /* jukebox */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -115,7 +115,7 @@ namespace MinecraftBlockHolder {
 		block_properties[108 /* brick_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[109 /* stone_brick_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[110 /* mycelium */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[111 /* waterlily */] = BlockProp::DESTROYABLE | BlockProp::WATER | BlockProp::TRANSPARENT | 0;
+		block_properties[111 /* waterlily */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[112 /* nether_brick */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[113 /* nether_brick_fence */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[114 /* nether_brick_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -130,7 +130,7 @@ namespace MinecraftBlockHolder {
 		block_properties[123 /* redstone_lamp */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[124 /* lit_redstone_lamp */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[125 /* double_wooden_slab */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[126 /* wooden_slab */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
+		block_properties[126 /* wooden_slab */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[127 /* cocoa */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[128 /* sandstone_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[129 /* emerald_ore */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
@@ -179,14 +179,14 @@ namespace MinecraftBlockHolder {
 		block_properties[172 /* hardened_clay */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[173 /* coal_block */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[174 /* packed_ice */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[175 /* double_plant */] = BlockProp::SOLID | 0;
+		block_properties[175 /* double_plant */] = BlockProp::AIR | BlockProp::SOLID | 0;
 		block_properties[176 /* standing_banner */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[177 /* wall_banner */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[178 /* daylight_detector_inverted */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
 		block_properties[179 /* red_sandstone */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[180 /* red_sandstone_stairs */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[181 /* double_stone_slab2 */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
-		block_properties[182 /* stone_slab2 */] = BlockProp::DESTROYABLE | BlockProp::TRANSPARENT | 0;
+		block_properties[182 /* stone_slab2 */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[183 /* spruce_fence_gate */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[184 /* birch_fence_gate */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;
 		block_properties[185 /* jungle_fence_gate */] = BlockProp::SOLID | BlockProp::DESTROYABLE | 0;

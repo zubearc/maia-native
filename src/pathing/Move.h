@@ -15,6 +15,10 @@ struct BlockRef {
 	char az;
 };
 
+
+#define MAX_BLOCK_BREAKS_PER_MOVE 3
+#define MAX_BLOCK_PLACES_PER_MOVE 3
+
 struct Move {
 	int x;
 	int y;
@@ -26,8 +30,8 @@ struct Move {
 	float cost;
 	short props;
 
-	BlockRef toBreak[3];
-	BlockRef toPlace[3];
+	BlockRef toBreak[MAX_BLOCK_BREAKS_PER_MOVE];
+	BlockRef toPlace[MAX_BLOCK_PLACES_PER_MOVE];
 
 	char numToBreak = 0;
 	char numToPlace = 0;
