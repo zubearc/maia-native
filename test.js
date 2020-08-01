@@ -1,6 +1,7 @@
 var addon = require("./" + process.arch + "/MaiaNative");
 var MaiaNative = addon;
 //var addon2 = require("./" + process.arch + "/MaiaChunk");
+const fs = require('fs');
 
 const readline = require('readline');
 
@@ -74,13 +75,40 @@ function runBlockTests() {
     return chunk2;
 }
 
-var chunk2 = runBlockTests();
+
+function loadAllChunks() {
+    fs.readdir('tests/', (err, files) => {
+        
+        let chunks = [];
+        
+        files.forEach(file => {
+            console.log(file);
+            let chunk2 = new MaiaNative.Chunk();
+
+            var chunkData = JSON.parse(fs.readFileSync('tests/'+file));
+            let buffer = Buffer.from(chunkData.data);
+            let ok = chunk2.load(chunkData.x, chunkData.z, chunkData.bitMap, chunkData.skyLightSent, chunkData.groundUp, buffer);
+
+            chunks.push(chunk2);
+        });
+
+        let pathing = new MaiaNative.Pathing();
+        let ret = pathing.getPathToBlock(189, 63, 213, 157, 45, 240, { allowPlacing: true }, (err, path) => {
+            console.log("Done!");
+            console.log(path);
+        });
+        console.log(ret);
+    });
+}
+
+loadAllChunks();
+/*var chunk2 = runBlockTests();
 
 function runPathingTests() {
     let pathing = new MaiaNative.Pathing();
-    let ret = pathing.getPathToBlock(198, 63, 211, 202, 63, 210);
+    let ret = pathing.getPathToBlock(198, 63, 211, 202, 63, 210, {});
     console.log(ret);
     //pathing.test();
 }
 
-runPathingTests();
+runPathingTests();*/

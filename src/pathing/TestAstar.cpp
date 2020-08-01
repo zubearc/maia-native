@@ -1,3 +1,11 @@
+#include <cstring>
+#include <cmath>
+#include <cstdio>
+#include <ctime>
+
+#include "TestAStar.h"
+#include "Movement.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -5,12 +13,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#include "Movement.h"
-#include "TestAStar.h"
-
-#include <cstring>
-#include <cmath>
 
 /*struct PathNode {
     int x;
@@ -34,10 +36,10 @@ static void PathNodeNeighbors(ASNeighborList neighbors, void* node, void* contex
     auto move = (Move*)node;
     auto n = movements->getNeighbors(*move);
 
-    printf("Neighbors for %d,%d,%d=%d\n", move->x, move->y, move->z, n.size());
+    //printf("Neighbors for %d,%d,%d=%d\n", move->x, move->y, move->z, n.size());
 
     for (auto neighbor : n) {
-        printf("-> %d,%d,%d=%d %d\n", neighbor.x, neighbor.y, neighbor.z, neighbor.blockId, neighbor.cost);
+        //printf("-> %d,%d,%d=%d %d\n", neighbor.x, neighbor.y, neighbor.z, neighbor.blockId, neighbor.cost);
         ASNeighborListAdd(neighbors, &neighbor, neighbor.cost);
     }
 /*
@@ -74,24 +76,49 @@ static void PathNodeNeighbors(ASNeighborList neighbors, void* node, void* contex
     */
 }
 
+const float sqrt2 = 1.4142;
+
 //
 float distanceXZ(float x, float z) {
-    const int sqrt2 = 1.4142;
     auto dx = abs(x);
     auto dz = abs(z);
     return abs(dx - dz) + fmin(dx, dz) * sqrt2;
 }
 
+
 static float PathNodeHeuristic(void* fromNode, void* toNode, void* context) {
     auto from = (Move*)fromNode;
     auto to = (Move*)toNode;
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define BAR 1
+#if BAR
     auto dx = from->x - to->x;
     auto dy = from->y - to->y;
     auto dz = from->z - to->z;
     return distanceXZ(dx, dz) + abs(dy);
+#else
+    auto D = 1;
+    auto D2 = sqrt2;
+    auto d1 = abs(to->x - from->x);
+    auto d2 = abs(to->y - from->y);
+    auto d3 = abs(to->z - from->z);
+    // return 0;
+    return (D * (d1 + d2 + d3)) + ((D2 - (2 * D)) * MIN(d1, d3));
+
+#endif
+
+
 }
 
 int distance();
+
+int manhattan(Move &pos1, Move &pos0) {
+    auto d1 = abs(pos1.x - pos0.x);
+    auto d2 = abs(pos1.y - pos0.y);
+    auto d3 = abs(pos1.z - pos0.z);
+    return d1 + d2 + d3;
+}
 
 static int PathNodeCompare(void* node1, void* node2, void* context) {
     auto from = (Move*)node1;
@@ -99,6 +126,17 @@ static int PathNodeCompare(void* node1, void* node2, void* context) {
 
     //printf("CMP (%d %d %d), (%d %d %d) -> ", from->x, from->y, from->z, to->x, from->y, from->z);
 
+    return memcmp(node1, node2, sizeof(int) * 3);
+    auto dist1 = manhattan(*from, *(Move*)context);
+    auto dist2 = manhattan(*to, *(Move*)context);
+
+    // Clever optimization here - we can simply memcmp on the first 12 bytes
+    if (memcmp(node1, node2, sizeof(int) * 3) == 0) {
+        return 0;
+    }
+
+    return dist1 < dist2 ? -1 : 1;
+#if 0
     if (from->x == to->x && from->y == to->y && from->z == to->z) { // are the same
         //printf("0\n");
         return 0;
@@ -113,6 +151,24 @@ static int PathNodeCompare(void* node1, void* node2, void* context) {
 
     //printf("%d\n", c);
     return c;
+#endif
+}
+
+unsigned int clockStart;
+
+static int PathShouldExit(AInt visitedCount, void* visitingNode, void* goalNode, void* context) {
+
+    auto clockNow = clock();
+
+    auto clockDelta = clockNow - clockStart;
+
+    //printf("Visited: %d, Cycles Sofar: %d\n", visitedCount, clockDelta);
+
+    if (visitedCount > 10000) {
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -120,7 +176,8 @@ static const ASPathNodeSource PathNodeSource = {
     sizeof(Move),
     &PathNodeNeighbors,
     &PathNodeHeuristic,
-    NULL,
+    &PathShouldExit,
+    //NULL,
     &PathNodeCompare
 };
 //auto from = new Move2{ 198, 63, 211 };
@@ -129,29 +186,40 @@ static const ASPathNodeSource PathNodeSource = {
 void testAstar() {
     movements = new Movements();
 
+    for (int i = 0; i < 10000; i++) {
+        ASPath path = ASPathCreate(&PathNodeSource, NULL, &pathFrom, &pathTo);
 
-    ASPath path = ASPathCreate(&PathNodeSource, NULL, &pathFrom, &pathTo);
 
+        if (ASPathGetCount(path) > 1) {
+            for (int i = 0; i < ASPathGetCount(path); i++) {
+                Move* pathNode = (Move*)ASPathGetNode(path, i);
 
-    if (ASPathGetCount(path) > 1) {
-        for (int i = 0; i < ASPathGetCount(path); i++) {
-            Move* pathNode = (Move*)ASPathGetNode(path, i);
-
-            printf("(%d, %d, %d [Places=%d, Destoys=%d]), ", pathNode->x, pathNode->y, pathNode->z, pathNode->numToPlace, pathNode->numToBreak);
+                //printf("(%d, %d, %d [Places=%d, Destoys=%d]), ", pathNode->x, pathNode->y, pathNode->z, pathNode->numToPlace, pathNode->numToBreak);
+            }
         }
-    } else {
-        printf("No path found!\n");
+        else {
+            //printf("No path found!\n");
+        }
+
+        ASPathDestroy(path);
     }
     
     delete movements;
 
 }
 
-std::vector<Move> astar(int x1, int y1, int z1, int x2, int y2, int z2) {
+std::vector<Move> astar(int x1, int y1, int z1, int x2, int y2, int z2, bool allowBreaking, bool allowPlacing) {
     movements = new Movements();
+    movements->allowBreaking = allowBreaking;
+    movements->allowPlacing = allowPlacing;
 
     Move from{x1, y1, z1};
     Move to{x2, y2, z2};
+
+    auto timeStart = time(NULL);
+
+    auto clockStartTime = clock();
+    clockStart = clockStartTime;
 
     ASPath path = ASPathCreate(&PathNodeSource, NULL, &from, &to);
 
@@ -169,6 +237,11 @@ std::vector<Move> astar(int x1, int y1, int z1, int x2, int y2, int z2) {
     } else {
         printf("No path found!\n");
     }
+    //auto timeEnd = time(NULL);
+    auto clockEndTime = clock();
+    auto clockDelta = clockEndTime - clockStartTime;
+    fprintf(stdout, "Took %d cycles (%4.4fs)\n %d", clockDelta, ((float)clockDelta) / CLOCKS_PER_SEC, CLOCKS_PER_SEC / 4);
+    ASPathDestroy(path);
     delete movements;
     return moves;
 }

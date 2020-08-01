@@ -100,7 +100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include\node;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include\node;$(ProjectDir)\node_modules\node-addon-api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -114,7 +114,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>NODE_GYP_MODULE_NAME=MaiaNative;USING_UV_SHARED=1;USING_V8_SHARED=1;V8_DEPRECATION_WARNINGS=1;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_NODE_EXTENSION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NODE_GYP_MODULE_NAME=MaiaNative;USING_UV_SHARED=1;USING_V8_SHARED=1;V8_DEPRECATION_WARNINGS=1;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_NODE_EXTENSION;NAPI_DISABLE_CPP_EXCEPTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
@@ -165,7 +165,9 @@
     <ClCompile Include="src\JSPathingProvider.cpp" />
     <ClCompile Include="src\MaiaNative.cpp" />
     <ClCompile Include="src\pathing\AStar.c" />
-    <ClCompile Include="src\pathing\MyAstar.cpp" />
+    <ClCompile Include="src\pathing\Movements.cpp" />
+    <ClCompile Include="src\pathing\PathingGoals.cpp" />
+    <ClCompile Include="src\pathing\PathingProvider.cpp" />
     <ClCompile Include="src\pathing\TestAstar.cpp" />
     <ClCompile Include="win_delay_load_hook.cc" />
   </ItemGroup>
@@ -182,10 +184,16 @@
     <ClInclude Include="src\pathing\AStar.h" />
     <ClInclude Include="src\pathing\Move.h" />
     <ClInclude Include="src\pathing\Movement.h" />
+    <ClInclude Include="src\pathing\PathingGoals.h" />
+    <ClInclude Include="src\pathing\PathingProvider.h" />
     <ClInclude Include="src\pathing\TestAStar.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\utils\MinecraftSerialVersions.h" />
     <ClInclude Include="src\utils\NibbleArray.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt" />
+    <Text Include="src\pathing\usage.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
